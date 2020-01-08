@@ -4,21 +4,29 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class HomeViewModel extends ViewModel {
+import com.ardroid.petroom.data.APIProvider;
+import com.ardroid.petroom.data.GalaxyPicture;
+import com.ardroid.petroom.data.NasaAPI;
+import com.ardroid.petroom.ui.basics.BasicViewModel;
 
-    private MutableLiveData<String> mText;
+import java.util.Date;
+import java.util.function.Consumer;
 
-    public HomeViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is home fragment");
-    }
+import io.reactivex.Scheduler;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
-    public LiveData<String> getText() {
-        return mText;
-    }
+public class HomeViewModel extends BasicViewModel {
+    private NasaAPI nasaApi = APIProvider.getNasaAPI();
+    MutableLiveData<GalaxyPicture> galaxyPictureLiveData = new MutableLiveData<>();
 
-    public void fetchData(){
-        //API call
-        mText.setValue("New Fact");
+    public void getPicture(Date date) {
+        compositeDisposable.add(
+        nasaApi.getGalaxyPicture(APIProvider.API_KEY, APIProvider.SDF.format(date))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(galaxyPicture -> galaxyPictureLiveData.setValue(galaxyPicture)
+                        , Throwable::printStackTrace));
     }
 }

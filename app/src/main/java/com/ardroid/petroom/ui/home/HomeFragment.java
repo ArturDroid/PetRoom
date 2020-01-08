@@ -16,6 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.ardroid.petroom.R;
@@ -54,34 +55,8 @@ public class HomeFragment extends Fragment implements DatePickerDialog.OnDateSet
         imageView = root.findViewById(R.id.galaxy_image_view);
         btnDateSet = root.findViewById(R.id.btnDateSet);
         btnDateReset = root.findViewById(R.id.btnDateReset);
-        handler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(@NonNull Message msg) {
-                if(msg.getData().containsKey("url")){
-                    Glide.with(HomeFragment.this).load(msg.getData().getString("url")).centerCrop().into(imageView);
-                    displayDate();
-                }
-                else if(msg.getData().containsKey("error")){
-                    Snackbar.make(root.findViewById(R.id.home_container), getString(R.string.API_error), Snackbar.LENGTH_LONG).show();
-                }
-                return true;
-            }
-        });
-
-        btnDateSet.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                openDatePicker();
-            }
-        });
-
-        btnDateReset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loadImage(new Date());
-            }
-        });
-
+        btnDateSet.setOnClickListener(view -> openDatePicker());
+        btnDateReset.setOnClickListener(view -> loadImage(new Date()));
         return root;
     }
 
@@ -89,36 +64,13 @@ public class HomeFragment extends Fragment implements DatePickerDialog.OnDateSet
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         loadImage(new Date());
+        homeViewModel.galaxyPictureLiveData.observe(getViewLifecycleOwner(),galaxyPicture -> {
+            Glide.with(HomeFragment.this).load(galaxyPicture.getUrl()).centerCrop().into(imageView);
+            displayDate();
+        });
     }
 
-    private void loadImage(final Date apodDate) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Response<GalaxyPicture> galaxyPictureResponse = APIProvider.getNasaAPI().getGalaxyPicture(APIProvider.API_KEY, APIProvider.SDF.format(apodDate)).execute();
-                    if(galaxyPictureResponse.isSuccessful()){
-                        HomeFragment.this.apodDate = apodDate;
-                        Bundle bundle = new Bundle();
-                        bundle.putString("url", Objects.requireNonNull(galaxyPictureResponse.body()).getUrl());
-                        Message message = new Message();
-                        message.setData(bundle);
-                        handler.sendMessage(message);
-                        Log.d(TAG, "run: " + Objects.requireNonNull(galaxyPictureResponse.body()).toString());
-                    }
-                    else{
-                        Bundle bundle = new Bundle();
-                        bundle.putString("error", galaxyPictureResponse.message());
-                        Message message = new Message();
-                        message.setData(bundle);
-                        handler.sendMessage(message);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
+
 
     @Override
     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
@@ -141,6 +93,10 @@ public class HomeFragment extends Fragment implements DatePickerDialog.OnDateSet
 
     private void displayDate() {
         dateTextView.setText(SDF.format(apodDate));
+    }
+
+    private void loadImage(Date data){
+        homeViewModel.getPicture(data);
     }
 
 }

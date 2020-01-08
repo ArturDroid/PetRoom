@@ -4,7 +4,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class GalleryViewModel extends ViewModel {
+import com.ardroid.petroom.ui.basics.BasicViewModel;
+
+public class GalleryViewModel extends BasicViewModel {
 
     private MutableLiveData<String> mText;
 
