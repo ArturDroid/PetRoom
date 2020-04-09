@@ -1,5 +1,6 @@
 package com.ardroid.petroom
 
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
@@ -24,7 +25,7 @@ class MainActivity : AppCompatActivity() {
             doLabs()
         } else {
             ActivityCompat.requestPermissions(this,
-                    arrayOf(WRITE_EXTERNAL_STORAGE),
+                    arrayOf(WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE),
                     REQUEST_RW_CODE)
         }
     }
